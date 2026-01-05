@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { propuestasAPI } from "../services/api";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "../styles.css";
 import {
@@ -15,16 +16,26 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Propuestas = () => {
+  const navigate = useNavigate();
   const [propuestas, setPropuestas] = useState([]);
-  const [form, setForm] = useState({ titulo: "", descripcion: "", categoria: "Infraestructura" });
+  const [form, setForm] = useState({
+    titulo: "",
+    descripcion: "",
+    categoria: "Infraestructura",
+  });
   const [filter, setFilter] = useState("approved");
   const [loading, setLoading] = useState(false);
   const [votosUsuario, setVotosUsuario] = useState({});
-  
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+  const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
   const loadVotosUsuario = () => {
-    const votos = JSON.parse(localStorage.getItem(`votos_propuestas_${currentUser?.id || currentUser?.email}`)) || {};
+    const votos =
+      JSON.parse(
+        localStorage.getItem(
+          `votos_propuestas_${currentUser?.id || currentUser?.email}`
+        )
+      ) || {};
     setVotosUsuario(votos);
   };
 
@@ -36,19 +47,19 @@ const Propuestas = () => {
 
   useEffect(() => {
     const onStorage = (e) => {
-      if (e.key === 'dataUpdated') {
+      if (e.key === "dataUpdated") {
         loadPropuestas();
         Swal.fire({
-          icon: 'info',
-          title: 'Actualización',
-          text: 'Se han aplicado cambios recientes. Lista actualizada.',
+          icon: "info",
+          title: "Actualización",
+          text: "Se han aplicado cambios recientes. Lista actualizada.",
           timer: 1600,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       }
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const loadPropuestas = async () => {
@@ -58,7 +69,9 @@ const Propuestas = () => {
       setPropuestas(data);
     } catch (error) {
       console.error("Error cargando propuestas:", error);
-      alert("Error al cargar propuestas. Asegúrate de que el servidor esté corriendo.");
+      alert(
+        "Error al cargar propuestas. Asegúrate de que el servidor esté corriendo."
+      );
     } finally {
       setLoading(false);
     }
@@ -70,27 +83,27 @@ const Propuestas = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!form.titulo.trim() || !form.descripcion.trim()) {
-      Swal.fire('Error', 'Por favor completa todos los campos', 'warning');
+      Swal.fire("Error", "Por favor completa todos los campos", "warning");
       return;
     }
 
     try {
       await propuestasAPI.create(form);
       setForm({ titulo: "", descripcion: "", categoria: "Infraestructura" });
-      
+
       Swal.fire({
-        icon: 'success',
-        title: '¡Propuesta Enviada!',
-        text: 'Tu propuesta será revisada por la administración.',
-        confirmButtonColor: '#2c5282'
+        icon: "success",
+        title: "¡Propuesta Enviada!",
+        text: "Tu propuesta será revisada por la administración.",
+        confirmButtonColor: "#2c5282",
       });
-      
+
       loadPropuestas();
     } catch (error) {
       console.error("Error creando propuesta:", error);
-      Swal.fire('Error', 'No se pudo crear la propuesta', 'error');
+      Swal.fire("Error", "No se pudo crear la propuesta", "error");
     }
   };
 
@@ -98,55 +111,60 @@ const Propuestas = () => {
     // Verificar si el usuario ya votó en esta propuesta
     if (votosUsuario[id]) {
       Swal.fire({
-        icon: 'warning',
-        title: 'Ya votaste',
-        text: `Ya votaste ${votosUsuario[id] === 'yes' ? 'a favor' : 'en contra'} en esta propuesta. Solo puedes votar una vez.`,
-        confirmButtonColor: '#2c5282'
+        icon: "warning",
+        title: "Ya votaste",
+        text: `Ya votaste ${
+          votosUsuario[id] === "yes" ? "a favor" : "en contra"
+        } en esta propuesta. Solo puedes votar una vez.`,
+        confirmButtonColor: "#2c5282",
       });
       return;
     }
 
     try {
       await propuestasAPI.vote(id, type);
-      
+
       // Guardar el voto en localStorage
       const nuevosVotos = { ...votosUsuario, [id]: type };
-      localStorage.setItem(`votos_propuestas_${currentUser?.id || currentUser?.email}`, JSON.stringify(nuevosVotos));
+      localStorage.setItem(
+        `votos_propuestas_${currentUser?.id || currentUser?.email}`,
+        JSON.stringify(nuevosVotos)
+      );
       setVotosUsuario(nuevosVotos);
-      
+
       Swal.fire({
-        icon: 'success',
-        title: '¡Voto Registrado!',
-        text: `Has votado ${type === 'yes' ? 'a favor' : 'en contra'}`,
+        icon: "success",
+        title: "¡Voto Registrado!",
+        text: `Has votado ${type === "yes" ? "a favor" : "en contra"}`,
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
-      
+
       loadPropuestas();
     } catch (error) {
       console.error("Error votando:", error);
-      Swal.fire('Error', 'No se pudo registrar tu voto', 'error');
+      Swal.fire("Error", "No se pudo registrar tu voto", "error");
     }
   };
 
   const addComment = async (id, text) => {
     if (!text.trim()) {
-      Swal.fire('Error', 'El comentario no puede estar vacío', 'warning');
+      Swal.fire("Error", "El comentario no puede estar vacío", "warning");
       return;
     }
 
     try {
       await propuestasAPI.addComment(id, text);
       Swal.fire({
-        icon: 'success',
-        title: 'Comentario agregado',
+        icon: "success",
+        title: "Comentario agregado",
         timer: 1200,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
       loadPropuestas();
     } catch (error) {
       console.error("Error agregando comentario:", error);
-      Swal.fire('Error', 'No se pudo agregar el comentario', 'error');
+      Swal.fire("Error", "No se pudo agregar el comentario", "error");
     }
   };
 
@@ -174,7 +192,10 @@ const Propuestas = () => {
             <FontAwesomeIcon icon={faLightbulb} />
           </div>
           <h1>Propuestas Ciudadanas</h1>
-          <p>Comparte tus ideas para mejorar Manta. Tu voz construye nuestra ciudad.</p>
+          <p>
+            Comparte tus ideas para mejorar Manta. Tu voz construye nuestra
+            ciudad.
+          </p>
         </div>
       </div>
 
@@ -196,7 +217,7 @@ const Propuestas = () => {
                 required
               />
             </div>
-            
+
             <div className="form-group">
               <label>Descripción Detallada</label>
               <textarea
@@ -227,8 +248,12 @@ const Propuestas = () => {
               </select>
             </div>
 
-            <button type="submit" className="btn-propuesta-submit" disabled={loading}>
-              {loading ? 'Enviando...' : 'Enviar Propuesta'}
+            <button
+              type="submit"
+              className="btn-propuesta-submit"
+              disabled={loading}
+            >
+              {loading ? "Enviando..." : "Enviar Propuesta"}
             </button>
           </form>
         </div>
@@ -243,13 +268,17 @@ const Propuestas = () => {
         </div>
         <div className="filter-buttons">
           <button
-            className={filter === "approved" ? "filter-btn active" : "filter-btn"}
+            className={
+              filter === "approved" ? "filter-btn active" : "filter-btn"
+            }
             onClick={() => setFilter("approved")}
           >
             <FontAwesomeIcon icon={faCheckCircle} /> Aprobadas
           </button>
           <button
-            className={filter === "pending" ? "filter-btn active" : "filter-btn"}
+            className={
+              filter === "pending" ? "filter-btn active" : "filter-btn"
+            }
             onClick={() => setFilter("pending")}
           >
             <FontAwesomeIcon icon={faClock} /> Pendientes
@@ -273,8 +302,14 @@ const Propuestas = () => {
         ) : (
           visible.map((p) => {
             const totalVotos = (p.votesYes || 0) + (p.votesNo || 0);
-            const porcentajeAFavor = totalVotos > 0 ? Math.round(((p.votesYes || 0) / totalVotos) * 100) : 0;
-            const porcentajeEnContra = totalVotos > 0 ? Math.round(((p.votesNo || 0) / totalVotos) * 100) : 0;
+            const porcentajeAFavor =
+              totalVotos > 0
+                ? Math.round(((p.votesYes || 0) / totalVotos) * 100)
+                : 0;
+            const porcentajeEnContra =
+              totalVotos > 0
+                ? Math.round(((p.votesNo || 0) / totalVotos) * 100)
+                : 0;
             const yaVotado = yaVoto(p.id);
             const miVoto = tipoVoto(p.id);
 
@@ -284,9 +319,15 @@ const Propuestas = () => {
                 <div className="propuesta-card-header">
                   <div className="propuesta-titulo-section">
                     <h3>{p.titulo}</h3>
-                    <span className={`propuesta-badge ${p.approved ? 'aprobada' : 'pendiente'}`}>
-                      <FontAwesomeIcon icon={p.approved ? faCheckCircle : faClock} />
-                      {p.approved ? ' Aprobada' : ' Pendiente'}
+                    <span
+                      className={`propuesta-badge ${
+                        p.approved ? "aprobada" : "pendiente"
+                      }`}
+                    >
+                      <FontAwesomeIcon
+                        icon={p.approved ? faCheckCircle : faClock}
+                      />
+                      {p.approved ? " Aprobada" : " Pendiente"}
                     </span>
                   </div>
                   {p.categoria && (
@@ -297,7 +338,9 @@ const Propuestas = () => {
                 {/* Descripción */}
                 <div className="propuesta-card-body">
                   <p>{p.descripcion}</p>
-                  <small className="propuesta-fecha">Creada: {p.createdAt}</small>
+                  <small className="propuesta-fecha">
+                    Creada: {p.createdAt}
+                  </small>
                 </div>
 
                 {/* Sección de Votación - Solo para aprobadas */}
@@ -347,9 +390,16 @@ const Propuestas = () => {
 
                     {/* Vote Badge o Buttons */}
                     {yaVotado ? (
-                      <div className={`ya-votaste-badge ${miVoto === 'yes' ? 'favor' : 'contra'}`}>
-                        <FontAwesomeIcon icon={miVoto === 'yes' ? faThumbsUp : faThumbsDown} />
-                        Ya votaste: {miVoto === 'yes' ? '✓ A Favor' : '✗ En Contra'}
+                      <div
+                        className={`ya-votaste-badge ${
+                          miVoto === "yes" ? "favor" : "contra"
+                        }`}
+                      >
+                        <FontAwesomeIcon
+                          icon={miVoto === "yes" ? faThumbsUp : faThumbsDown}
+                        />
+                        Ya votaste:{" "}
+                        {miVoto === "yes" ? "✓ A Favor" : "✗ En Contra"}
                       </div>
                     ) : (
                       <div className="vote-buttons">
@@ -376,10 +426,10 @@ const Propuestas = () => {
                     <FontAwesomeIcon icon={faComment} />
                     <span>Comentarios ({p.comments?.length || 0})</span>
                   </div>
-                  
+
                   <div className="comments-list">
                     {p.comments?.length > 0 ? (
-                      p.comments.map((c, idx) => (
+                      p.comments.slice(0, 2).map((c, idx) => (
                         <div key={idx} className="comment-item">
                           <div className="comment-text">{c.text}</div>
                           <small className="comment-date">{c.date}</small>
@@ -390,18 +440,32 @@ const Propuestas = () => {
                     )}
                   </div>
 
-                  <div className="comment-form">
-                    <input
-                      type="text"
-                      placeholder="Escribe un comentario..."
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && e.target.value.trim()) {
-                          addComment(p.id, e.target.value);
-                          e.target.value = "";
-                        }
-                      }}
-                    />
-                  </div>
+                  {p.comments?.length > 2 && (
+                    <button
+                      className="btn-ver-foro"
+                      onClick={() => navigate(`/propuestas/${p.id}`)}
+                    >
+                      Ver Foro de Discusión ({p.comments.length - 2} más)
+                    </button>
+                  )}
+
+                  {p.comments?.length <= 2 && p.comments?.length > 0 && (
+                    <button
+                      className="btn-ver-foro"
+                      onClick={() => navigate(`/propuestas/${p.id}`)}
+                    >
+                      Ver Foro Completo
+                    </button>
+                  )}
+
+                  {p.comments?.length === 0 && (
+                    <button
+                      className="btn-ver-foro"
+                      onClick={() => navigate(`/propuestas/${p.id}`)}
+                    >
+                      Participar en Discusión
+                    </button>
+                  )}
                 </div>
               </div>
             );
