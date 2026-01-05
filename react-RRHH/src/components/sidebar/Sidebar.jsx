@@ -13,8 +13,10 @@ import {
   faCalendarAlt,
   faPoll,
   faBell,
+  faComments,
 } from "@fortawesome/free-solid-svg-icons";
 import { notificacionesAPI } from "../../services/api";
+import NotificationDropdown from "../NotificationDropdown";
 
 const Sidebar = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -62,7 +64,9 @@ const Sidebar = () => {
   useEffect(() => {
     const handleStorage = (event) => {
       if (event.key === "notificationsUpdated") {
-        const storedUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+        const storedUser = JSON.parse(
+          localStorage.getItem("currentUser") || "null"
+        );
         loadNotifications(storedUser || currentUser);
       }
     };
@@ -75,7 +79,10 @@ const Sidebar = () => {
     if (!showNotifications) return;
 
     const handleClickOutside = (event) => {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
@@ -178,6 +185,16 @@ const Sidebar = () => {
         </NavLink>
 
         <NavLink
+          to="/lideres"
+          className={({ isActive }) =>
+            isActive ? "navbar-link active" : "navbar-link"
+          }
+        >
+          <FontAwesomeIcon icon={faUsers} />
+          <span>Líderes</span>
+        </NavLink>
+
+        <NavLink
           to="/estadisticas"
           className={({ isActive }) =>
             isActive ? "navbar-link active" : "navbar-link"
@@ -199,6 +216,30 @@ const Sidebar = () => {
           </NavLink>
         )}
 
+        {isAdmin && (
+          <>
+            <NavLink
+              to="/moderar-comentarios"
+              className={({ isActive }) =>
+                isActive ? "navbar-link active" : "navbar-link"
+              }
+            >
+              <FontAwesomeIcon icon={faComments} />
+              <span>Moderar</span>
+            </NavLink>
+
+            <NavLink
+              to="/notificaciones-masivas"
+              className={({ isActive }) =>
+                isActive ? "navbar-link active" : "navbar-link"
+              }
+            >
+              <FontAwesomeIcon icon={faBell} />
+              <span>Notificaciones</span>
+            </NavLink>
+          </>
+        )}
+
         <NavLink
           to="/mi-perfil"
           className={({ isActive }) =>
@@ -212,68 +253,42 @@ const Sidebar = () => {
 
       {/* Usuario y logout */}
       <div className="navbar-user">
-        <div className="notification-wrapper" ref={notificationsRef}>
+        <div className="notification-wrapper">
           <button
             type="button"
+            ref={notificationsRef}
             className={`notification-bell${showNotifications ? " active" : ""}`}
             onClick={handleToggleNotifications}
             aria-label="Notificaciones"
           >
             <FontAwesomeIcon icon={faBell} />
-            {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+            {unreadCount > 0 && (
+              <span className="notification-badge">{unreadCount}</span>
+            )}
           </button>
-
-          {showNotifications && (
-            <div className="notification-dropdown">
-              <div className="notification-header">
-                <h4>Notificaciones</h4>
-                {unreadCount > 0 ? (
-                  <span className="notification-status unread">{unreadCount} sin leer</span>
-                ) : (
-                  <span className="notification-status">Todo al día</span>
-                )}
-              </div>
-
-              <div className="notification-list">
-                {notifications.length === 0 ? (
-                  <div className="notification-empty">No tienes notificaciones</div>
-                ) : (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`notification-item${notification.leido ? "" : " unread"}`}
-                    >
-                      <div className="notification-title">{notification.titulo}</div>
-                      <div className="notification-message">{notification.mensaje}</div>
-                      <div className="notification-meta">
-                        {notification.ciudadanoNombre && (
-                          <span className="notification-author">{notification.ciudadanoNombre}</span>
-                        )}
-                        <span>
-                          {notification.createdAt
-                            ? new Date(notification.createdAt).toLocaleString('es-EC')
-                            : ''}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="user-info">
           <div className="user-avatar">
             {currentUser?.nombre?.charAt(0).toUpperCase() || "U"}
           </div>
-          <span className="user-name">{currentUser?.cedula || currentUser?.email}</span>
+          <span className="user-name">
+            {currentUser?.cedula || currentUser?.email}
+          </span>
         </div>
         <Link to="/" className="logout-btn">
           <FontAwesomeIcon icon={faSignOutAlt} />
           <span>Salir</span>
         </Link>
       </div>
+
+      <NotificationDropdown
+        isOpen={showNotifications}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onClose={() => setShowNotifications(false)}
+        bellRef={notificationsRef}
+      />
     </header>
   );
 };
